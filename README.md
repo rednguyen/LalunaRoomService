@@ -13,7 +13,11 @@ every day at 8am Vietnam time.
    `translate.js`).
 3. `postToZalo.js` posts a header message, then one message per new review,
    to the configured Zalo group.
-4. The workflow commits the updated `state/last-run.json` back to the repo
+4. `analyzeReviews.js` sends the day's new reviews to Gemini
+   (`gemini-flash-lite-latest`) and posts a short Vietnamese summary of
+   strong points and weak points as a final message. If this step fails, it
+   just gets skipped — the review posts above it still go out.
+5. The workflow commits the updated `state/last-run.json` back to the repo
    so the same review is never posted twice.
 
 The workflow runs once daily at 01:00 UTC, which is always 8am in
@@ -27,6 +31,7 @@ In the GitHub repo, go to **Settings → Secrets and variables → Actions** and
 - `APIFY_URL` — the full Apify run-sync-get-dataset-items URL (token included)
 - `ZALO_URL` — the full Zalo bot `sendMessage` URL (token included)
 - `ZALO_CHAT_ID` — the target Zalo group chat id
+- `GEMINI_API_KEY` — a Gemini API key from [Google AI Studio](https://aistudio.google.com) (free tier)
 
 ## Local testing
 
