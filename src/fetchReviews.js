@@ -1,5 +1,5 @@
 const APIFY_RUN_INPUT = {
-  maxReviewsPerHotel: 10,
+  maxReviewsPerHotel: 15,
   reviewScores: ["ALL"],
   sortReviewsBy: "f_recent_desc",
   startUrls: [

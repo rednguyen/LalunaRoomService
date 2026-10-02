@@ -1,6 +1,6 @@
 import { fetchReviews } from "./fetchReviews.js";
 import { loadState, saveState } from "./state.js";
-import { selectNewReviews, formatDigestMessage } from "./processReviews.js";
+import { selectNewReviews, formatReviewMessage, todayVietnamDate } from "./processReviews.js";
 import { postToZalo } from "./postToZalo.js";
 
 function isAroundEightPmCentral() {
@@ -27,12 +27,14 @@ async function main() {
     return;
   }
 
-  const message = formatDigestMessage(newReviews);
-  await postToZalo(message);
-  console.log(`Posted ${newReviews.length} new review(s) to Zalo.`);
+  await postToZalo(`🏨 Booking Reviews ngày ${todayVietnamDate()}:`);
 
-  state.postedIds.push(...newReviews.map((r) => r.id));
-  await saveState(state);
+  for (const review of newReviews) {
+    await postToZalo(await formatReviewMessage(review));
+    state.postedIds.push(review.id);
+    await saveState(state);
+    console.log(`Posted review ${review.id} to Zalo.`);
+  }
 }
 
 main().catch((err) => {
