@@ -1,0 +1,43 @@
+name: Daily Review Digest
+
+on:
+  schedule:
+    # 01:00 UTC = 8pm Central Daylight Time (UTC-5, roughly Mar-Nov)
+    - cron: "0 1 * * *"
+    # 02:00 UTC = 8pm Central Standard Time (UTC-6, roughly Nov-Mar)
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      skip_time_check:
+        description: "Run immediately, ignoring the 8pm Central guard"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Fetch reviews and post to Zalo
+        env:
+          APIFY_URL: ${{ secrets.APIFY_URL }}
+          ZALO_URL: ${{ secrets.ZALO_URL }}
+          ZALO_CHAT_ID: ${{ secrets.ZALO_CHAT_ID }}
+          SKIP_TIME_CHECK: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_time_check || 'false' }}
+        run: node src/index.js
+
+      - name: Commit updated state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state/last-run.json
+          git diff --staged --quiet || git commit -m "Update review state [skip ci]"
+          git push

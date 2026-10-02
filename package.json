@@ -1,0 +1,13 @@
+{
+  "name": "laluna-review-bot",
+  "version": "1.0.0",
+  "description": "Daily job: fetch Laluna Hoi An Booking.com reviews via Apify and post new ones to a Zalo group chat.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  }
+}
