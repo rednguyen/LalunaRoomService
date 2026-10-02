@@ -23,12 +23,17 @@ async function main() {
     console.log(`Posted review ${review.id} to Zalo.`);
   }
 
-  try {
-    const summary = await analyzeReviews(newReviews);
-    await postToZalo(`🤖 Phân tích AI - Điểm mạnh & điểm cần cải thiện hôm nay:\n\n${summary}`);
-    console.log("Posted AI summary to Zalo.");
-  } catch (err) {
-    console.error(`AI summary failed, skipping: ${err.message}`);
+  const reviewsWithText = newReviews.filter((r) => r.likedText || r.dislikedText);
+  if (reviewsWithText.length === 0) {
+    console.log("No liked/disliked text to analyze, skipping AI summary.");
+  } else {
+    try {
+      const summary = await analyzeReviews(reviewsWithText);
+      await postToZalo(`🤖 Phân tích AI - Điểm mạnh & điểm cần cải thiện hôm nay:\n\n${summary}`);
+      console.log("Posted AI summary to Zalo.");
+    } catch (err) {
+      console.error(`AI summary failed, skipping: ${err.message}`);
+    }
   }
 }
 
