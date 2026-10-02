@@ -2,7 +2,7 @@
 
 Daily GitHub Action that fetches Laluna Hoi An's Booking.com reviews via Apify,
 translates them to Vietnamese, and posts any new ones to a Zalo group chat,
-every day at 8am Vietnam time.
+every day at 11am Vietnam time.
 
 ## How it works
 
@@ -20,7 +20,7 @@ every day at 8am Vietnam time.
 5. The workflow commits the updated `state/last-run.json` back to the repo
    so the same review is never posted twice.
 
-The workflow runs once daily at 01:00 UTC, which is always 8am in
+The workflow runs once daily at 04:00 UTC, which is always 11am in
 `Asia/Ho_Chi_Minh` (Vietnam doesn't observe daylight saving time, so this
 never needs adjusting).
 
