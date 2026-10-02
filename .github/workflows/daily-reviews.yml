@@ -2,16 +2,9 @@ name: Daily Review Digest
 
 on:
   schedule:
-    # 01:00 UTC = 8pm Central Daylight Time (UTC-5, roughly Mar-Nov)
+    # 01:00 UTC = 8am Vietnam time (Asia/Ho_Chi_Minh is a fixed UTC+7, no DST)
     - cron: "0 1 * * *"
-    # 02:00 UTC = 8pm Central Standard Time (UTC-6, roughly Nov-Mar)
-    - cron: "0 2 * * *"
-  workflow_dispatch:
-    inputs:
-      skip_time_check:
-        description: "Run immediately, ignoring the 8pm Central guard"
-        type: boolean
-        default: true
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -31,7 +24,6 @@ jobs:
           APIFY_URL: ${{ secrets.APIFY_URL }}
           ZALO_URL: ${{ secrets.ZALO_URL }}
           ZALO_CHAT_ID: ${{ secrets.ZALO_CHAT_ID }}
-          SKIP_TIME_CHECK: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_time_check || 'false' }}
         run: node src/index.js
 
       - name: Commit updated state
