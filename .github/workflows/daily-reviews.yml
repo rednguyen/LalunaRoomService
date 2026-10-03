@@ -2,8 +2,8 @@ name: Daily Review Digest
 
 on:
   schedule:
-    # 04:00 UTC = 11am Vietnam time (Asia/Ho_Chi_Minh is a fixed UTC+7, no DST)
-    - cron: "0 4 * * *"
+    # 04:30 UTC = 11:30am Vietnam time (Asia/Ho_Chi_Minh is a fixed UTC+7, no DST)
+    - cron: "30 4 * * *"
   workflow_dispatch: {}
 
 permissions:
