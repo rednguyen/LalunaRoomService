@@ -20,9 +20,14 @@ every day at 11:30am Vietnam time.
 5. The workflow commits the updated `state/last-run.json` back to the repo
    so the same review is never posted twice.
 
-The workflow runs once daily at 04:30 UTC, which is always 11:30am in
-`Asia/Ho_Chi_Minh` (Vietnam doesn't observe daylight saving time, so this
-never needs adjusting).
+The workflow has no GitHub-native `schedule:` trigger — GitHub's own cron
+scheduler proved unreliable (it never fired on its own across two days of
+testing). Instead, a free cron job on [cron-job.org](https://cron-job.org)
+calls the `workflow_dispatch` REST API daily at 11:30am Vietnam time
+(`Asia/Ho_Chi_Minh`), which cron-job.org supports as a real timezone — no UTC
+conversion needed. That request needs a GitHub Personal Access Token
+(fine-grained, scoped to this repo, `Actions: Read and write` permission
+only) sent as an `Authorization: Bearer` header.
 
 ## Setup
 
@@ -32,6 +37,9 @@ In the GitHub repo, go to **Settings → Secrets and variables → Actions** and
 - `ZALO_URL` — the full Zalo bot `sendMessage` URL (token included)
 - `ZALO_CHAT_ID` — the target Zalo group chat id
 - `GEMINI_API_KEY` — a Gemini API key from [Google AI Studio](https://aistudio.google.com) (free tier)
+
+Then set up the external trigger on cron-job.org — see "How it works" above
+for the request details (URL, method, headers, body).
 
 ## Local testing
 

@@ -1,9 +1,9 @@
 name: Daily Review Digest
 
 on:
-  schedule:
-    # 04:30 UTC = 11:30am Vietnam time (Asia/Ho_Chi_Minh is a fixed UTC+7, no DST)
-    - cron: "30 4 * * *"
+  # Triggered daily at 11:30am Vietnam time by an external cron-job.org job
+  # calling the workflow_dispatch REST API, instead of GitHub's own
+  # `schedule:` trigger, which proved unreliable (never fired on its own).
   workflow_dispatch: {}
 
 permissions:
