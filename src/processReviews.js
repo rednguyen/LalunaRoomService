@@ -30,7 +30,7 @@ export async function formatReviewMessage(review) {
     const liked = await translateToVietnamese(review.likedText);
     lines.push(`👍 Good:\n${liked}`);
   }
-  if (review.dislikedText) {
+  if (review.dislikedText && review.rating < 8) {
     const disliked = await translateToVietnamese(review.dislikedText);
     lines.push(`👎 Bad:\n${disliked}`);
   }
