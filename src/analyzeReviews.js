@@ -23,7 +23,7 @@ Trả lời theo đúng định dạng sau:
 ⚠️ Điểm cần cải thiện:
 - ...
 
-Nếu không có điểm cần cải thiện nào, bỏ qua phần đó. Giữ câu trả lời ngắn gọn, súc tích.`;
+Nếu không có đánh giá nào chứa phần "Disliked" ở trên, bỏ qua HOÀN TOÀN phần "⚠️ Điểm cần cải thiện" - không viết tiêu đề đó, không viết "(Không có)", không đề cập gì đến việc không có điểm cần cải thiện. Chỉ trả về phần "✅ Điểm mạnh" trong trường hợp đó. Giữ câu trả lời ngắn gọn, súc tích.`;
 }
 
 export async function analyzeReviews(reviews) {
