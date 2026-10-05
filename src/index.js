@@ -14,9 +14,18 @@ async function main() {
     return;
   }
 
-  await postToZalo(`🏨 Booking Reviews ngày ${todayVietnamDate()}:`);
+  const hasReviewsToPost = newReviews.some((r) => r.rating !== 10);
+  if (hasReviewsToPost) {
+    await postToZalo(`🏨 Booking Reviews ngày ${todayVietnamDate()}:`);
+  }
 
   for (const review of newReviews) {
+    if (review.rating === 10) {
+      state.postedIds.push(review.id);
+      await saveState(state);
+      console.log(`Skipped review ${review.id} (perfect 10/10 score, not posted).`);
+      continue;
+    }
     await postToZalo(await formatReviewMessage(review));
     state.postedIds.push(review.id);
     await saveState(state);
