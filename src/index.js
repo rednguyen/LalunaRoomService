@@ -1,6 +1,6 @@
 import { fetchReviews } from "./fetchReviews.js";
 import { loadState, saveState } from "./state.js";
-import { selectNewReviews, formatReviewMessage, todayVietnamDate, visibleDislikedText } from "./processReviews.js";
+import { selectNewReviews, formatReviewMessage, todayVietnamDate } from "./processReviews.js";
 import { postToZalo } from "./postToZalo.js";
 import { analyzeReviews } from "./analyzeReviews.js";
 
@@ -32,9 +32,7 @@ async function main() {
     console.log(`Posted review ${review.id} to Zalo.`);
   }
 
-  const reviewsForAnalysis = newReviews
-    .map((r) => ({ ...r, dislikedText: visibleDislikedText(r) }))
-    .filter((r) => r.likedText || r.dislikedText);
+  const reviewsForAnalysis = newReviews.filter((r) => r.likedText || r.dislikedText);
 
   if (reviewsForAnalysis.length === 0) {
     console.log("No liked/disliked text to analyze, skipping AI summary.");

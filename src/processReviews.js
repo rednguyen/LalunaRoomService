@@ -20,10 +20,6 @@ export function todayVietnamDate() {
   return formatVietnamDate(new Date());
 }
 
-export function visibleDislikedText(review) {
-  return review.rating < 8 ? review.dislikedText : null;
-}
-
 export async function formatReviewMessage(review) {
   const lines = [];
   lines.push(`⭐ ${review.rating}/10 - ${review.reviewTitle}`);
@@ -34,9 +30,8 @@ export async function formatReviewMessage(review) {
     const liked = await translateToVietnamese(review.likedText);
     lines.push(`👍 Good:\n${liked}`);
   }
-  const dislikedText = visibleDislikedText(review);
-  if (dislikedText) {
-    const disliked = await translateToVietnamese(dislikedText);
+  if (review.dislikedText) {
+    const disliked = await translateToVietnamese(review.dislikedText);
     lines.push(`👎 Bad:\n${disliked}`);
   }
 
