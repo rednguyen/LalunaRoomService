@@ -32,7 +32,7 @@ async function main() {
     console.log(`Posted review ${review.id} to Zalo.`);
   }
 
-  const reviewsForAnalysis = newReviews.filter((r) => r.likedText || r.dislikedText);
+  const reviewsForAnalysis = newReviews.filter((r) => r.rating !== 10 && (r.likedText || r.dislikedText));
 
   if (reviewsForAnalysis.length === 0) {
     console.log("No liked/disliked text to analyze, skipping AI summary.");

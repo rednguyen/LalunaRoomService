@@ -8,13 +8,29 @@ function buildPrompt(reviews) {
     })
     .join("\n\n");
 
+  const hasDislikedText = reviews.some((r) => r.dislikedText);
+
+  if (!hasDislikedText) {
+    return `Dưới đây là các đánh giá của khách lưu trú tại khách sạn Laluna Hoi An trong ngày hôm nay:
+
+${reviewText}
+
+Hãy phân tích và tóm tắt ngắn gọn bằng tiếng Việt các điểm mạnh nổi bật (những gì khách khen).
+
+Trả lời theo đúng định dạng sau, không thêm phần nào khác:
+✅ Điểm mạnh:
+- ...
+
+Giữ câu trả lời ngắn gọn, súc tích.`;
+  }
+
   return `Dưới đây là các đánh giá của khách lưu trú tại khách sạn Laluna Hoi An trong ngày hôm nay:
 
 ${reviewText}
 
 Hãy phân tích và tóm tắt ngắn gọn bằng tiếng Việt:
 1. Điểm mạnh nổi bật (những gì khách khen)
-2. Điểm cần cải thiện (những gì khách phàn nàn, nếu có)
+2. Điểm cần cải thiện (những gì khách phàn nàn)
 
 Trả lời theo đúng định dạng sau:
 ✅ Điểm mạnh:
@@ -23,7 +39,7 @@ Trả lời theo đúng định dạng sau:
 ⚠️ Điểm cần cải thiện:
 - ...
 
-Nếu không có đánh giá nào chứa phần "Disliked" ở trên, bỏ qua HOÀN TOÀN phần "⚠️ Điểm cần cải thiện" - không viết tiêu đề đó, không viết "(Không có)", không đề cập gì đến việc không có điểm cần cải thiện. Chỉ trả về phần "✅ Điểm mạnh" trong trường hợp đó. Giữ câu trả lời ngắn gọn, súc tích.`;
+Giữ câu trả lời ngắn gọn, súc tích.`;
 }
 
 export async function analyzeReviews(reviews) {
