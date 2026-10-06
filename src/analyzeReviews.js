@@ -8,25 +8,14 @@ function buildPrompt(reviews) {
     })
     .join("\n\n");
 
+  const hasLikedText = reviews.some((r) => r.likedText);
   const hasDislikedText = reviews.some((r) => r.dislikedText);
 
-  if (!hasDislikedText) {
-    return `Dưới đây là các đánh giá của khách lưu trú tại khách sạn Laluna Hoi An trong ngày hôm nay:
+  const intro = `Dưới đây là các đánh giá của khách lưu trú tại khách sạn Laluna Hoi An trong ngày hôm nay:\n\n${reviewText}`;
+  const outro = "Giữ câu trả lời ngắn gọn, súc tích.";
 
-${reviewText}
-
-Hãy phân tích và tóm tắt ngắn gọn bằng tiếng Việt các điểm mạnh nổi bật (những gì khách khen).
-
-Trả lời theo đúng định dạng sau, không thêm phần nào khác:
-✅ Điểm mạnh:
-- ...
-
-Giữ câu trả lời ngắn gọn, súc tích.`;
-  }
-
-  return `Dưới đây là các đánh giá của khách lưu trú tại khách sạn Laluna Hoi An trong ngày hôm nay:
-
-${reviewText}
+  if (hasLikedText && hasDislikedText) {
+    return `${intro}
 
 Hãy phân tích và tóm tắt ngắn gọn bằng tiếng Việt:
 1. Điểm mạnh nổi bật (những gì khách khen)
@@ -39,7 +28,30 @@ Trả lời theo đúng định dạng sau:
 ⚠️ Điểm cần cải thiện:
 - ...
 
-Giữ câu trả lời ngắn gọn, súc tích.`;
+${outro}`;
+  }
+
+  if (hasLikedText) {
+    return `${intro}
+
+Hãy phân tích và tóm tắt ngắn gọn bằng tiếng Việt các điểm mạnh nổi bật (những gì khách khen).
+
+Trả lời theo đúng định dạng sau, không thêm phần nào khác:
+✅ Điểm mạnh:
+- ...
+
+${outro}`;
+  }
+
+  return `${intro}
+
+Hãy phân tích và tóm tắt ngắn gọn bằng tiếng Việt các điểm cần cải thiện (những gì khách phàn nàn).
+
+Trả lời theo đúng định dạng sau, không thêm phần nào khác:
+⚠️ Điểm cần cải thiện:
+- ...
+
+${outro}`;
 }
 
 export async function analyzeReviews(reviews) {
