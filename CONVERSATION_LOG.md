@@ -197,3 +197,49 @@ state/last-run.json       # tracked posted review IDs (capped at 100), committed
 
 External trigger: cron-job.org → GitHub `workflow_dispatch` REST API, daily
 at 11:30am Vietnam time.
+
+## 9. AI summary accuracy fixes
+
+A live run surfaced two real bugs in the AI summary feature, caught by
+comparing the actual Zalo output against what the AI summary said:
+
+- **10/10 reviews leaking into the analysis.** Only one review (9/10) was
+  posted that day, but the AI summary mentioned 8 different staff names —
+  clear evidence it was drawing on several 10/10 reviews that had been
+  correctly skipped from *posting* but were still being fed into
+  `analyzeReviews()`. Fixed by excluding `rating === 10` from
+  `reviewsForAnalysis` in `index.js`, matching the AI's input to exactly
+  what's shown in the chat.
+- **Empty "⚠️ Điểm cần cải thiện" section.** Despite an explicit prompt
+  instruction to omit this section when there's no dislikedText, Gemini
+  still printed the header with a literal "- Không có" line — proving that
+  asking an LLM to conditionally omit something isn't reliable enough on
+  its own. Fixed by making it **deterministic in code** instead:
+  `buildPrompt()` in `analyzeReviews.js` now checks `hasLikedText` /
+  `hasDislikedText` across the batch *before* building the prompt, and
+  branches into one of three prompt variants — strong-points-only,
+  weak-points-only, or both — so Gemini is never even given the option to
+  write a section that shouldn't exist. Applied the same treatment
+  symmetrically to "✅ Điểm mạnh" (omitted when there's no likedText either).
+
+Lesson reinforced: for a hard yes/no formatting rule like "don't print this
+section if there's no data," compute it in JS and branch the prompt — don't
+rely on an instruction inside the prompt text, even a very explicit one.
+
+## 10. Final guard: an all-10s day sends nothing
+
+Asked (defensively, as a last check) to confirm that if *every* new review
+on a given day happens to be a perfect 10, literally nothing gets sent to
+Zalo that day. Traced through the code rather than guessing:
+
+- Header message is gated by `hasReviewsToPost = newReviews.some(r => r.rating !== 10)`
+- The per-review posting loop only calls `postToZalo` when `rating !== 10`
+- `reviewsForAnalysis` (section 9's fix) also excludes `rating === 10`,
+  so if everything's a 10, it's empty and the AI summary step is skipped too
+
+All three checks share the same `rating !== 10` condition, so they can't
+drift out of sync with each other. Verified with a quick synthetic
+Node script (two mock rating-10 reviews, counting would-be `postToZalo`
+calls) rather than assuming — confirmed **0** messages sent. This was
+already a side effect of the section-2 and section-9 work, so **no code
+change was needed** — just verification.
