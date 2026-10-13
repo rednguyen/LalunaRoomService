@@ -26,6 +26,10 @@ export async function formatReviewMessage(review) {
   lines.push(`👤 ${review.userName} - ${review.userLocation}`);
   lines.push(`📅 Ngày: ${formatVietnamDate(new Date(review.reviewDate))}`);
   lines.push("--------------------------------------");
+  if (review.commentsText) {
+    const comments = await translateToVietnamese(review.commentsText);
+    lines.push(comments);
+  }
   if (review.likedText) {
     const liked = await translateToVietnamese(review.likedText);
     lines.push(`👍 Good:\n${liked}`);

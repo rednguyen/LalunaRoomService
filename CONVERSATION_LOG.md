@@ -243,3 +243,30 @@ Node script (two mock rating-10 reviews, counting would-be `postToZalo`
 calls) rather than assuming — confirmed **0** messages sent. This was
 already a side effect of the section-2 and section-9 work, so **no code
 change was needed** — just verification.
+
+## 11. AI summary turned off
+
+The hotel owner didn't want the AI strong/weak-points message at the end of
+each day's posts, so the call to `analyzeReviews()` was removed from
+`index.js`. `src/analyzeReviews.js` itself is kept so the feature can be
+re-enabled later. `GEMINI_API_KEY` is still required, since translation
+also uses Gemini.
+
+## 12. Agoda reviews
+
+Added Agoda as a second source via the Apify actor
+`knagymate~fast-agoda-reviews-scraper` (`src/fetchAgodaReviews.js`, new
+`AGODA_URL` secret, same Apify token as Booking). The run input's
+`cutoffDate` is computed as today minus 11 days in Vietnam time; `maxReviewsPerHotel: 5`.
+
+- Agoda puts the review text in `reviewComments` (`reviewPositives` /
+  `reviewNegatives` came back empty in samples), so Agoda messages show the
+  translated comments with no label, under the same rating/name/date header.
+- Agoda reviews are normalized to the Booking shape, with ids prefixed
+  `agoda-` in state so they can't collide with Booking ids.
+- Each source posts its own batch: `🏨 Agoda Reviews ngày X:` header, then
+  one message per review. Agoda is fetched and posted first, then Booking —
+  strictly one after the other, never in parallel. 10/10 skip applies to both.
+- One source failing no longer stops the other; the workflow's commit-state
+  step now runs with `if: always()` so already-posted ids are still saved.
+- Added `DRY_RUN=1` mode: prints messages instead of posting, doesn't save state.

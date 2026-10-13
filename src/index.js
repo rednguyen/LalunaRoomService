@@ -1,48 +1,72 @@
 import { fetchReviews } from "./fetchReviews.js";
+import { fetchAgodaReviews } from "./fetchAgodaReviews.js";
 import { loadState, saveState } from "./state.js";
 import { selectNewReviews, formatReviewMessage, todayVietnamDate } from "./processReviews.js";
 import { postToZalo } from "./postToZalo.js";
-import { analyzeReviews } from "./analyzeReviews.js";
 
-async function main() {
-  const state = await loadState();
-  const reviews = await fetchReviews();
+// DRY_RUN=1 prints messages instead of posting them and leaves state untouched.
+const DRY_RUN = Boolean(process.env.DRY_RUN);
+
+// Processed one at a time, in this order: each source is fully fetched and
+// posted before the next one is fetched.
+const SOURCES = [
+  { name: "Agoda", fetch: fetchAgodaReviews },
+  { name: "Booking", fetch: fetchReviews }
+];
+
+async function send(text) {
+  if (DRY_RUN) {
+    console.log(`\n[DRY RUN] would post:\n${text}\n`);
+    return;
+  }
+  await postToZalo(text);
+}
+
+async function persist(state) {
+  if (!DRY_RUN) await saveState(state);
+}
+
+async function processSource(source, state) {
+  const reviews = await source.fetch();
   const newReviews = selectNewReviews(reviews, state.postedIds);
 
   if (newReviews.length === 0) {
-    console.log("No new reviews since last run.");
+    console.log(`[${source.name}] No new reviews since last run.`);
     return;
   }
 
   const hasReviewsToPost = newReviews.some((r) => r.rating !== 10);
   if (hasReviewsToPost) {
-    await postToZalo(`🏨 Booking Reviews ngày ${todayVietnamDate()}:`);
+    await send(`🏨 ${source.name} Reviews ngày ${todayVietnamDate()}:`);
   }
 
   for (const review of newReviews) {
     if (review.rating === 10) {
       state.postedIds.push(review.id);
-      await saveState(state);
-      console.log(`Skipped review ${review.id} (perfect 10/10 score, not posted).`);
+      await persist(state);
+      console.log(`[${source.name}] Skipped review ${review.id} (perfect 10/10 score, not posted).`);
       continue;
     }
-    await postToZalo(await formatReviewMessage(review));
+    await send(await formatReviewMessage(review));
     state.postedIds.push(review.id);
-    await saveState(state);
-    console.log(`Posted review ${review.id} to Zalo.`);
+    await persist(state);
+    console.log(`[${source.name}] Posted review ${review.id} to Zalo.`);
   }
 
-  const reviewsForAnalysis = newReviews.filter((r) => r.rating !== 10 && (r.likedText || r.dislikedText));
+  // AI strong/weak-points summary disabled at the hotel owner's request.
+  // analyzeReviews.js is kept so it can be re-enabled later.
+}
 
-  if (reviewsForAnalysis.length === 0) {
-    console.log("No liked/disliked text to analyze, skipping AI summary.");
-  } else {
+async function main() {
+  const state = await loadState();
+
+  // One source failing (e.g. an Apify outage) shouldn't stop the others from posting.
+  for (const source of SOURCES) {
     try {
-      const summary = await analyzeReviews(reviewsForAnalysis);
-      await postToZalo(`🤖 Phân tích AI - Điểm mạnh & điểm cần cải thiện hôm nay:\n\n${summary}`);
-      console.log("Posted AI summary to Zalo.");
+      await processSource(source, state);
     } catch (err) {
-      console.error(`AI summary failed, skipping: ${err.message}`);
+      console.error(`[${source.name}] Failed: ${err.stack || err.message}`);
+      process.exitCode = 1;
     }
   }
 }
