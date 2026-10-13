@@ -185,11 +185,12 @@ committed template). Local testing: `node --env-file=.env src/index.js`
 ```
 .github/workflows/daily-reviews.yml   # workflow_dispatch only (no native schedule)
 src/
-  index.js            # orchestration
-  fetchReviews.js      # Apify
+  index.js            # orchestration: Agoda first, then Booking, one at a time
+  fetchAgodaReviews.js # Apify (Agoda) — added in section 12
+  fetchReviews.js      # Apify (Booking)
   processReviews.js    # dedupe, sort, format
   translate.js          # Gemini-based translation, with retry
-  analyzeReviews.js     # Gemini-based daily strong/weak-points summary
+  analyzeReviews.js     # Gemini strong/weak-points summary — not called (section 11)
   postToZalo.js          # Zalo sendMessage
   state.js                # state/last-run.json read/write
 state/last-run.json       # tracked posted review IDs (capped at 100), committed back by CI
@@ -270,3 +271,78 @@ Added Agoda as a second source via the Apify actor
 - One source failing no longer stops the other; the workflow's commit-state
   step now runs with `if: always()` so already-posted ids are still saved.
 - Added `DRY_RUN=1` mode: prints messages instead of posting, doesn't save state.
+
+### 12a. Getting the right Agoda endpoint
+
+The Agoda URL first provided was a **dataset** endpoint
+(`/v2/datasets/<id>/items`), i.e. the stored output of one past scrape — not
+something that runs a new scrape, and a `POST` to it would *append* items to
+that dataset rather than run anything. Looked up the dataset's `actId` via the
+Apify API to find the actor (`knagymate~fast-agoda-reviews-scraper`) and used
+its `run-sync-get-dataset-items` URL instead, same pattern as Booking.
+
+Actor input schema (checked via the API) has only: `hotelUrl`, `rating`,
+`enabledProviders`, `language`, `cutoffDate`, `aggregateRatings`,
+`maxReviewsPerHotel`. **There is no sort option.**
+
+### 12b. Agoda message format (as requested)
+
+```
+🏨 Agoda Reviews ngày {today's VN date}:        <- standalone header message
+
+⭐ {rating}/10 - {reviewTitle}
+👤 {reviewerName} - {reviewerCountryName}
+📅 Ngày: {reviewDate, VN date}
+--------------------------------------
+{reviewComments, translated to Vietnamese}
+```
+
+### 12c. Cutoff date: yesterday → 10 days → 11 days
+
+Started as "yesterday (VN time)", changed to today minus 10 days, then to
+today minus **11** days. Set by `CUTOFF_DAYS_BACK` at the top of
+`src/fetchAgodaReviews.js`. Dedupe via `state/last-run.json` means the
+overlapping window never causes reposts.
+
+### 12d. Scraper quirks found during live testing
+
+- **Flaky / stops early.** Several runs logged `Retrying post_review_comments
+  due to: No comments found in the response`, then gave up after 1–3 pages
+  (e.g. `Reached total available reviews: 0, returned: 0, skipped: 200` out of
+  ~4,100 reviews). Agoda's pages aren't date-ordered, so an early stop can miss
+  a recent review on a given day. The multi-day cutoff window helps: each
+  review gets ~10 daily chances to be picked up. (Possible future fix if
+  needed: retry the Agoda scrape once when it returns no real reviews.)
+- **Cutoff is midnight UTC = 7am Vietnam.** The actor treats `cutoffDate` as
+  `YYYY-MM-DDT00:00:00+00:00`, so reviews posted 00:00–07:00 VN time on the
+  cutoff day are excluded. Harmless in steady-state daily use.
+- **Empty result shape.** When no reviews match, the actor still returns one
+  row with only aggregate scores and `hotelReviewId: null`; the bot filters
+  these out.
+
+### 12e. Local test runs (real, against the live Zalo group)
+
+Checked `git fetch` first each time so local state matched GitHub.
+1. cutoff Oct 3: scraper failed early → nothing posted.
+2. cutoff Oct 3: returned Jihyun (10/10, Oct 4) → recorded, not posted.
+3. after reordering (Agoda first): Jihyun already recorded → nothing posted.
+4. cutoff 11 days (Oct 2): returned all 4 → Foong & Rich (10/10) recorded,
+   **Lachlan (8.8) posted to Zalo** with the Agoda header. Booking: nothing new.
+
+Only 4 Agoda reviews existed since Oct 1 (confirmed by an earlier full,
+16-page scrape): three 10/10s and Lachlan's 8.8.
+
+### 12f. Where "already posted" is tracked
+
+`state/last-run.json` → `postedIds` (last 100 kept). Loaded at start, each
+review's ID appended and saved immediately after it's posted or skipped,
+then committed back to the repo by the workflow. Agoda IDs are prefixed
+`agoda-`. `DRY_RUN=1` never writes this file.
+
+### 12g. Committed and pushed
+
+Commit `b124e8f` ("Add Agoda reviews, disable AI summary"), including the
+updated state file (so CI won't repost Lachlan). **Required manual step:**
+add the `AGODA_URL` repo secret in GitHub (Settings → Secrets and variables →
+Actions) before the next scheduled run. The Apify token was pasted in chat
+during this session — consider rotating it and updating both secrets.
