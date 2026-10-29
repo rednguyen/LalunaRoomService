@@ -1,7 +1,5 @@
 {
   "postedIds": [
-    "a8326d2b592c67c2",
-    "b9974f9a05bde5f2",
     "fb2f92d3cc796776",
     "c43ddfa0c1a4a012",
     "c19396c28ff2a34e",
@@ -98,7 +96,10 @@
     "74b11ac59a4167cd",
     "654fff86a310cc08",
     "f0f18d16caf5d842",
-    "e4bf27ea53208ceb"
+    "e4bf27ea53208ceb",
+    "agoda-1197915792",
+    "agoda-1197458831",
+    "ed8e95a2a46a6794"
   ],
-  "lastRunAt": "2026-10-28T02:01:33.513Z"
+  "lastRunAt": "2026-10-29T02:01:25.346Z"
 }
